@@ -1,8 +1,6 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::HashSet;
 use std::hash::Hash;
-use std::iter::zip;
 use clap::Parser;
-use colored::{Colorize,Color};
 use itertools;
 
 #[derive(Hash, Eq, PartialEq, Debug, Clone)]
@@ -27,7 +25,7 @@ impl Piece {
     fn from(s: &[&str]) -> Piece {
         let res = s[0].find(|c| c != '.').unwrap();
         let mut res = Piece {
-            id: s[0].bytes().nth(res).unwrap() as char,
+            id: s[0].chars().nth(res).unwrap() as char,
             data: vec![],
         };
         for line in s {
@@ -114,35 +112,24 @@ impl Piece {
 }
 
 const PIECES : [&[&str]; 8]  = [
-    &[ "F..", "F..", "FFF" ],
-    &[ "TTTT", ".T.." ],
-    &[ "SS..", ".SSS" ],
-    &[ "QQQ", "QQQ" ],
-    &[ "Z..", "ZZZ", "..Z" ],
-    &[ "L...", "LLLL" ],
-    &[ "U.U", "UUU" ],
-    &[ "BB.", "BBB" ]
-];
-
-const COLORS : [Color; 8] = [
-    Color::Red,
-    Color::Green,
-    Color::Yellow,
-    Color::Blue,
-    Color::Magenta,
-    Color::Cyan,
-    Color::White,
-    Color::BrightBlack,
+    &[ "🟥..", "🟥..", "🟥🟥🟥" ],
+    &[ "🟦🟦🟦🟦", ".🟦.." ],
+    &[ "🟧🟧..", ".🟧🟧🟧" ],
+    &[ "🟨🟨🟨", "🟨🟨🟨" ],
+    &[ "🟩..", "🟩🟩🟩", "..🟩" ],
+    &[ "🟪...", "🟪🟪🟪🟪" ],
+    &[ "🟫.🟫", "🟫🟫🟫" ],
+    &[ "⬜⬜.", "⬜⬜⬜" ]
 ];
 
 const BOARD : [&str; 7] = [
-    "......#",
-    "......#",
+    "......⬛",
+    "......⬛",
     ".......",
     ".......",
     ".......",
     ".......",
-    "...####",
+    "...⬛⬛⬛⬛",
 ];
 
 #[derive(Parser, Debug)]
@@ -153,13 +140,9 @@ struct Args {
 
     #[arg(short, long)]
     month: usize,
-
-    #[arg(short, long, default_value = "true")]
-    color: bool,
 }
 
 struct Board {
-    block_map: HashMap<char, String>,
     pieces: Vec<Vec<Piece>>,
     board: Piece,
     day: usize,
@@ -172,23 +155,18 @@ impl Board {
     fn new(args: &Args) -> Board {
         let mut board = Piece::from(&BOARD);
         let mut pieces = vec![];
-        let mut block_map = HashMap::new();
-        let color_enabled = args.color && "X".color(Color::Red).to_string().len() > 1;
 
-        for (p, c) in zip(&PIECES, COLORS) {
+        for p in &PIECES {
             let piece = Piece::from(p);
             let pos : Vec<Piece> = piece.generate_positions().into_iter().collect();
             pieces.push(pos);
-            if color_enabled {
-                block_map.insert(piece.id, "██".color(c).to_string());
-            }
         }
 
         let d = args.day - 1;
         let m = args.month - 1;
         board.data[m / 6][m % 6] = 'M';
         board.data[2 + d / 7][d % 7] = 'D';
-        return Board { block_map, pieces, board,
+        return Board { pieces, board,
             day: args.day, month: args.month, n: 1, calls: 0 };
     }
 
@@ -198,12 +176,7 @@ impl Board {
                 match c {
                     'M' => print!("{:0>2}", self.month),
                     'D' => print!("{:0>2}", self.day),
-                    '#' => print!("  "),
-                    _   => if let Some(s) = self.block_map.get(c) {
-                            print!("{}", s);
-                        } else {
-                            print!("{}{}", c, c);
-                        }
+                    _   => print!("{}", c),
                 }
             }
             println!("");
@@ -241,7 +214,6 @@ impl Board {
         self._solve_dfs(&self.pieces.clone(), 0);
         println!("Calls: {}", self.calls);
     }
-
 }
 
 fn main() {
