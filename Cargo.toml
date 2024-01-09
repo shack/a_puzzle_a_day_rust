@@ -1,0 +1,9 @@
+[package]
+name = "a_puzzle_a_day"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+itertools = "0.12.0"
+clap = { version = "4.4.14", features = ["derive"] }
+colored = "2.1.0"
